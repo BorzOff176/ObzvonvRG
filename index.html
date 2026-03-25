@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обзвон Росгвардия - полная балльная система</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', system-ui, sans-serif;
+            background: #0a0f1e;
+            color: #e2e8f0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0b1120 0%, #050a14 100%);
+            border-radius: 20px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            border: 1px solid #1e3a5f;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            color: #3b82f6;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #7c8db0;
+            font-size: 14px;
+        }
+
+        .result-panel {
+            background: #0b1120;
+            border-radius: 20px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            border: 1px solid #1e3a5f;
+        }
+
+        .score-card {
+            background: #050a14;
+            padding: 12px 24px;
+            border-radius: 16px;
+            text-align: center;
+            border-left: 3px solid #3b82f6;
+        }
+
+        .score-card .label {
+            font-size: 12px;
+            color: #7c8db0;
+        }
+
+        .score-card .value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #60a5fa;
+        }
+
+        .grade-card {
+            background: #050a14;
+            padding: 12px 28px;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .grade-card .label {
+            font-size: 12px;
+            color: #7c8db0;
+        }
+
+        .grade-card .value {
+            font-size: 48px;
+            font-weight: bold;
+        }
+
+        .verdict-card {
+            background: #050a14;
+            padding: 12px 28px;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .verdict-card .label {
+            font-size: 12px;
+            color: #7c8db0;
+        }
+
+        .verdict-card .value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .grade-5 { color: #22c55e; }
+        .grade-4 { color: #3b82f6; }
+        .grade-3 { color: #eab308; }
+        .grade-2 { color: #ef4444; }
+
+        .reset-btn {
+            background: #1e2a3a;
+            border: 1px solid #3b82f6;
+            padding: 12px 24px;
+            border-radius: 12px;
+            color: #e2e8f0;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .reset-btn:hover {
+            background: #2a3a5a;
+            transform: scale(0.98);
+        }
+
+        .section {
+            background: #0b1120;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            border: 1px solid #1e3a5f;
+        }
+
+        .section-title {
+            background: #0f172a;
+            padding: 14px 22px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #60a5fa;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #1e3a5f;
+            user-select: none;
+        }
+
+        .section-title:hover {
+            background: #1a2542;
+        }
+
+        .section-content {
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .question-card {
+            background: #050a14;
+            border-radius: 16px;
+            border: 1px solid #1e3a5f;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        .question-header {
+            padding: 14px 18px;
+            background: #0a1020;
+            border-bottom: 1px solid #1e3a5f;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .question-text {
+            font-weight: 600;
+            font-size: 15px;
+            color: #f0f4ff;
+            flex: 1;
+        }
+
+        .max-points-badge {
+            background: #1e2a5a;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #90caf9;
+        }
+
+        .question-body {
+            padding: 14px 18px;
+        }
+
+        .conditions-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .condition-item {
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 10px 14px;
+            min-width: 200px;
+            flex: 1 1 auto;
+            border-left: 3px solid #3b82f6;
+        }
+
+        .condition-label {
+            font-size: 11px;
+            color: #7c8db0;
+            margin-bottom: 6px;
+        }
+
+        .condition-check {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        .condition-check span {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .check-btn {
+            background: #1a2538;
+            border: none;
+            padding: 5px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            color: #b0c4ff;
+            transition: all 0.2s;
+        }
+
+        .check-btn.active {
+            background: #1e3a8a;
+            color: white;
+            box-shadow: 0 0 4px rgba(59,130,246,0.5);
+        }
+
+        .condition-points {
+            font-size: 11px;
+            color: #60a5fa;
+        }
+
+        .question-footer {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px dashed #1e3a5f;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .earned-points {
+            font-size: 13px;
+            color: #90caf9;
+        }
+
+        .reference-answer {
+            font-size: 11px;
+            color: #6b7c9e;
+            background: #0f1422;
+            padding: 6px 10px;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 800px) {
+            .conditions-list {
+                flex-direction: column;
+            }
+            .result-panel {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>⚔️ Обзвон в Росгвардию - универсальная утилита</h1>
+        <p>Доброго времени суток! Вы попали на обзвон в "Название подразделения" по городу "Город". Провожу обзвон я, [РП ФИО, Должность].</p>
+    </div>
+
+    <div class="result-panel">
+        <div class="score-card">
+            <div class="label">НАБРАНО БАЛЛОВ</div>
+            <div class="value" id="totalScore">0</div>
+            <div class="label">из <span id="maxScore">0</span></div>
+        </div>
+        <div class="grade-card">
+            <div class="label">ОЦЕНКА</div>
+            <div class="value" id="gradeValue">-</div>
+        </div>
+        <div class="verdict-card">
+            <div class="label">ВЕРДИКТ</div>
+            <div class="value" id="verdictText">-</div>
+        </div>
+        <button class="reset-btn" id="resetBtn">🔄 СБРОСИТЬ ВСЕ</button>
+    </div>
+
+    <div id="questionsContainer"></div>
+</div>
+
+<script>
+    // ==================== ВСЕ ВОПРОСЫ С НУМЕРАЦИЕЙ ПО ОБЗВОНУ ====================
+    const questionsData = [
+        // ========== УК. ОСНОВНАЯ ЧАСТЬ (вопросы 1-10) ==========
+        { section: "📖 УК. Основная часть", num: "1", text: "В случае, если человек угрожает сотруднику полиции расправой, какую статью вы инкриминируете? Озвучьте наказание.", maxPoints: 1, conditions: [{ text: "Статья 5.4 УК — арест сроком до 3 лет", points: 1 }] },
+        { section: "📖 УК. Основная часть", num: "2", text: "Какую статью инкриминируете в случае похищения человека? Озвучьте наказание.", maxPoints: 1, conditions: [{ text: "Статья 4.4 УК — арест сроком от 4 до 6 лет", points: 1 }] },
+        { section: "📖 УК. Основная часть", num: "3", text: "Какая статья инкриминируется в случае использования или ношения гражданским лицом огнестрельного оружия, его основных частей, боеприпасов? Назовите наказание.", maxPoints: 1, conditions: [{ text: "Статья 6.9 УК — штраф 20 000 руб. + арест сроком на 3 года", points: 1 }] },
+        { section: "📖 УК. Основная часть", num: "4", text: "Какая статья инкриминируется в случае проникновения гражданином на частную территорию, не принадлежащую ему? Озвучьте наказание.", maxPoints: 1, conditions: [{ text: "Статья 6.7 УК — арест сроком на 2 года", points: 1 }] },
+        { section: "📖 УК. Основная часть", num: "5", text: "Какую статью инкриминируете в случае оскорбления гражданским лицом другого гражданского лица? Озвучьте наказание.", maxPoints: 1, conditions: [{ text: "19.2 КоАП — штраф до 10 000 руб. или административный арест на 10 суток", points: 1 }] },
+        { section: "📖 УК. Основная часть", num: "6", text: "Какая статья инкриминируется в случае обнаружения у гражданина наркотических веществ? Какие следственные/процессуальные действия проведете?", maxPoints: 2, conditions: [{ text: "Статья 6.10 УК — штраф 20 000 руб. + арест сроком на 3 года", points: 1 }, { text: "Следственные действия: изъятие, осмотр, упаковка, направление на экспертизу", points: 1 }] },
+        { section: "📖 УК. Основная часть", num: "7", text: "Какую статью инкриминируете, если вам отдаст требование об остановке патрульного автомобиля гражданское лицо? Назовите наказание.", maxPoints: 1, conditions: [{ text: "Статья 5.7 УК — штраф 50 000 руб. или арест сроком до 2 лет", points: 1 }] },
+        { section: "📖 УК. Основная часть", num: "8", text: "Какая статья инкриминируется в случае долгого преследования экипажа полиции и/или создания помех в его работе? Озвучьте наказание.", maxPoints: 1, conditions: [{ text: "Статья 5.7.1 — штраф 50 000 руб. или арест сроком до 2 лет", points: 1 }] },
+        { section: "📖 УК. Основная часть", num: "9", text: "Какую статью инкриминируете человеку за разглашение имени или фамилии оперативника Росгвардии, который находится в спецформе?", maxPoints: 1, conditions: [{ text: "Статья 5.11 — арест сроком до 3 лет", points: 1 }] },
+        { section: "📖 УК. Основная часть", num: "10", text: "Перечислите уместные к применению статьи УК в отношении правонарушителя (ситуация с погоней, тараном, ДТП, оскорблениями). Достаточно 3 статей.", maxPoints: 1, conditions: [{ text: "3 любые статьи из: 5.6, 5.8, 5.8.1, 5.8.2, 5.9, 7.4 УК", points: 1 }] },
+        
+        // ========== УК. ОБЩАЯ ЧАСТЬ (вопросы 1-4) ==========
+        { section: "📖 УК. Общая часть", num: "1", text: "Сколько времени должно пройти, чтобы нарушение человека не являлось должным, то есть было просроченным? Какая статья это регулирует?", maxPoints: 1.5, conditions: [{ text: "Верный срок: IC 14 месяцев / OOC 14 дней", points: 1 }, { text: "Статья 2.4 УК", points: 0.5 }] },
+        { section: "📖 УК. Общая часть", num: "2", text: "Назовите статью уголовного кодекса, которая регулирует ситуации относительно соучастия в преступлении.", maxPoints: 1, conditions: [{ text: "Статья 2.3 УК", points: 1 }] },
+        { section: "📖 УК. Общая часть", num: "3", text: "Является ли балаклава запрещенным предметом, который сотрудник в процессе задержания обязан конфисковать? Какая статья это описывает?", maxPoints: 1.5, conditions: [{ text: "Да, балаклава является запрещенным предметом, обязан конфисковать", points: 1 }, { text: "Статья 2.5 УК", points: 0.5 }] },
+        { section: "📖 УК. Общая часть", num: "4", text: "Какие виды наказания предусмотрены УК?", maxPoints: 1.5, conditions: [{ text: "Штраф, арест (оба вида названы)", points: 1 }, { text: "Статьи 3.1 и 3.2 УК", points: 0.5 }] },
+        
+        // ========== ФЗоП (вопросы 1-20) ==========
+        { section: "⚖️ ФЗоП", num: "1", text: "Назовите обязанности сотрудника полиции.", maxPoints: 1, conditions: [{ text: "Названо 3 и более обязанностей (безопасность, ОРД, охрана задержанных, надзор ПДД, помощь)", points: 1 }] },
+        { section: "⚖️ ФЗоП", num: "2", text: "Что должен сделать сотрудник полиции без специальной формы перед первоначальным обращением к гражданину?", maxPoints: 1, conditions: [{ text: "Представиться", points: 1 }] },
+        { section: "⚖️ ФЗоП", num: "3", text: "Обязан ли сотрудник предоставлять свое служебное удостоверение, если гражданин не изъявил такого желания?", maxPoints: 1, conditions: [{ text: "Нет, не обязан (2.3 ФЗоП)", points: 1 }] },
+        { section: "⚖️ ФЗоП", num: "4", text: "Если в результате применения сотрудником табельного оружия человек получает ранения средней и выше тяжести, какие первичные и дальнейшие действия он обязан предпринять?", maxPoints: 1, conditions: [{ text: "Оказать первую медицинскую помощь, вызвать скорую медицинскую помощь", points: 1 }] },
+        { section: "⚖️ ФЗоП", num: "5", text: "Что должен сделать сотрудник, если личность гражданина невозможно установить на месте?", maxPoints: 1, conditions: [{ text: "Отвезти в отделение, выяснить личность через КПК или провести дактилоскопию", points: 1 }] },
+        { section: "⚖️ ФЗоП", num: "6", text: "Имеет ли сотрудник право нарушать уголовный кодекс вне смены? Назовите пункт, который это регламентирует.", maxPoints: 1.5, conditions: [{ text: "Нет, не имеет права", points: 1 }, { text: "Пункт 11.2 ОПГО", points: 0.5 }] },
+        { section: "⚖️ ФЗоП", num: "7", text: "Понесет ли сотрудник ответственность, если в результате обоснованного и правомерного применения специальных средств гражданин получит какие-либо увечья?", maxPoints: 1, conditions: [{ text: "Нет, не понесет ответственности", points: 1 }] },
+        { section: "⚖️ ФЗоП", num: "8", text: "Перечислите оружие, которое запрещено использовать с водительского сидения автомобиля. Перечислите оружие, которое запрещено использовать с пассажирского сидения автомобиля. (одна ошибка = 0)", maxPoints: 1, conditions: [{ text: "Водительское: АК-47, дробовик, иные винтовки; Пассажирское: дробовик", points: 1 }] },
+        { section: "⚖️ ФЗоП", num: "9", text: "Какая скорость является нормированной для ведения огня с пассажирского сидения? Для ведения огня с водительского сидения? (одна ошибка = 0)", maxPoints: 1, conditions: [{ text: "Пассажирское: 250 км/ч; Водительское: 150 км/ч", points: 1 }] },
+        { section: "⚖️ ФЗоП", num: "10", text: "Если на сотрудника напало два безоружных гражданина, имеет ли он право открыть огонь на поражение? Назовите пункт.", maxPoints: 1.5, conditions: [{ text: "Да, имеет право открыть огонь на поражение", points: 1 }, { text: "Пункт 3 статьи 4.8 ФЗоП", points: 0.5 }] },
+        { section: "⚖️ ФЗоП", num: "11", text: "Какой пункт, какого НПА, регламентирует применение смертельной силы? Назовите условия применения смертельной силы.", maxPoints: 1.5, conditions: [{ text: "8.1 ФЗоП", points: 0.5 }, { text: "Условия: BH/WH, уход по воде или другие способы стремительного уклонения от задержания, нарушающие ВПС", points: 1 }] },
+        { section: "⚖️ ФЗоП", num: "12", text: "Можно ли задержать человека за проникновение на закрытую/охраняемую территорию без факта проникновения? Назовите статью за проникновение и пункт, который регламентирует процесс задержания по данной статье.", maxPoints: 1.5, conditions: [{ text: "Нет, нельзя задержать без факта проникновения", points: 0.5 }, { text: "Статья 6.8 УК (проникновение)", points: 0.5 }, { text: "Пункт 7.2 ФЗоП (задержание)", points: 0.5 }] },
+        { section: "⚖️ ФЗоП", num: "13", text: "Можно ли направлять оружие на ООП при задержании? Если да, то назовите статью, которая это регламентирует.", maxPoints: 1, conditions: [{ text: "Да, можно направлять оружие на ООП", points: 0.5 }, { text: "Статья 4.11 ФЗоП", points: 0.5 }] },
+        { section: "⚖️ ФЗоП", num: "14", text: "Вправе ли сотрудник использовать спецсредства без предупреждения? Если да, то назовите статью, которая это регламентирует.", maxPoints: 1, conditions: [{ text: "Да, вправе использовать без предупреждения", points: 0.5 }, { text: "Статья 4.2 ФЗоП", points: 0.5 }] },
+        { section: "⚖️ ФЗоП", num: "15", text: "Можно ли сотруднику Младшего состава самостоятельно брать ящики с боеприпасами? Если нет, то назовите статью, которая это регламентирует.", maxPoints: 1, conditions: [{ text: "Нет, нельзя", points: 0.5 }, { text: "Статья 3.19 ФЗоП", points: 0.5 }] },
+        { section: "⚖️ ФЗоП", num: "16", text: "Может ли сотрудник самовольно, без подтверждения от гражданина поставить метку об отказе? Если нет, то назовите статью, которая это регламентирует.", maxPoints: 1, conditions: [{ text: "Нет, не может", points: 0.5 }, { text: "Статья 2.7.1 ФЗоП", points: 0.5 }] },
+        { section: "⚖️ ФЗоП", num: "17", text: "Сколько времени есть у сотрудника после задержания чтобы доставить гражданина в участок? Назовите статью, которая это регламентирует.", maxPoints: 1.5, conditions: [{ text: "15 минут", points: 1 }, { text: "Статья 2.15 ФЗоП", points: 0.5 }] },
+        { section: "⚖️ ФЗоП", num: "18", text: "Обязан ли сотрудник иметь при себе всю амуницию, доступную ему по рангу? Если да, назовите статью, которая это регламентирует.", maxPoints: 1, conditions: [{ text: "Да, обязан", points: 0.5 }, { text: "Статья 2.4 ФЗоП", points: 0.5 }] },
+        { section: "⚖️ ФЗоП", num: "19", text: "Если игрок немного срезал при погоне, но не получил преимущества, можете ли вы открыть огонь по автомобилю?", maxPoints: 1, conditions: [{ text: "Нельзя.", points: 1 }] },
+        { section: "⚖️ ФЗоП", num: "20", text: "Если при наведении оружия преступник начинает уезжать, разрешено ли открыть огонь по автомобилю сразу же, как игрок начал PG?", maxPoints: 1, conditions: [{ text: "Нельзя.", points: 1 }] },
+        
+        // ========== УСТАВ РОСГВАРДИИ (вопросы 1-16) ==========
+        { section: "📜 Устав Росгвардии", num: "1", text: "Может ли оперативник Росгвардии при МВД выезжать из отдела экипажем, состоящим только из него? Есть ли исключения?", maxPoints: 1.5, conditions: [{ text: "Нет, не может", points: 1 }, { text: "Исключение: если оперативник едет в другой отдел за напарником", points: 0.5 }] },
+        { section: "📜 Устав Росгвардии", num: "2", text: "Для исполнения каких целей оперативники Росгвардии имеют право надеть специальную форму? (от двух причин)", maxPoints: 1, conditions: [{ text: "Отлов преступников, реагирование на действия ОПГ, выезд на рейды (2+ названо)", points: 1 }] },
+        { section: "📜 Устав Росгвардии", num: "3", text: "Имеют ли право оперативники Росгвардии при МВД осуществлять свою деятельность на всей территории республики и провинции?", maxPoints: 1, conditions: [{ text: "Да", points: 1 }] },
+        { section: "📜 Устав Росгвардии", num: "4", text: "Если сотрудник Росгвардии, будучи вне смены, получит указание явиться на смену в связи с высокой активностью организованной преступной группировки — обязан ли он это сделать?", maxPoints: 1, conditions: [{ text: "Да, обязан", points: 1 }] },
+        { section: "📜 Устав Росгвардии", num: "5", text: "Разрешено ли сотруднику переходить на более жесткий стиль общения? Назовите условия перехода.", maxPoints: 1, conditions: [{ text: "Условия: сопротивление, неподчинение, хамство, попытка доказать невиновность (1+ названо)", points: 1 }] },
+        { section: "📜 Устав Росгвардии", num: "6", text: "Может ли оперативник Росгвардии при МВД использовать бранные слова в своей речи? Если да, назовите условия перехода.", maxPoints: 1.5, conditions: [{ text: "Да, может", points: 1 }, { text: "Условия: перестрелка, любое правонарушение со стороны гражданина", points: 0.5 }] },
+        { section: "📜 Устав Росгвардии", num: "7", text: "Может ли старший или ответственный за опергруппу не предоставлять удостоверение по требованию гражданина, находясь в специальной форме?", maxPoints: 1, conditions: [{ text: "Да, может не предоставлять", points: 1 }] },
+        { section: "📜 Устав Росгвардии", num: "8", text: "Вправе ли сотрудники установить оцепление территории при проведении обычного задержания?", maxPoints: 1, conditions: [{ text: "Нет, не вправе", points: 1 }] },
+        { section: "📜 Устав Росгвардии", num: "9", text: "Каков радиус запретной территории в отношении гражданских лиц при проведении специальной операции? Ответ дайте в метрах.", maxPoints: 1.5, conditions: [{ text: "100 метров", points: 1 }, { text: "До момента, пока гражданские не будут видны на мини-карте", points: 0.5 }] },
+        { section: "📜 Устав Росгвардии", num: "10", text: "Разрешено ли сотрудникам Росгвардии использовать в ходе работы водные транспортные средства? При каких условиях?", maxPoints: 1.5, conditions: [{ text: "Да, разрешено", points: 1 }, { text: "Условие: если нет полной уверенности в нейтрализации преступников иным способом", points: 0.5 }] },
+        { section: "📜 Устав Росгвардии", num: "11", text: "Может ли сотрудник иметь какие-либо связи с преступными группировками, которые не сказываются на работе сотрудника или организации?", maxPoints: 1, conditions: [{ text: "Может", points: 1 }] },
+        { section: "📜 Устав Росгвардии", num: "12", text: "Кому обязан подчиняться сотрудник Росгвардии? (достаточно 3 лиц)", maxPoints: 1, conditions: [{ text: "Главнокомандующий, командиры, заместители, начальники УВД (3+ названо)", points: 1 }] },
+        { section: "📜 Устав Росгвардии", num: "13", text: "Что входит в вооружение и специальный транспорт Росгвардии?", maxPoints: 2, conditions: [{ text: "Названо 2 вида оружия (Пистолет Грач, АК-74М, дубинка, электрошокер, дробовик)", points: 1 }, { text: "Названы ВСЕ авто: Audi S8 Plus, Газель БИЗНЕС, Audi Q7, Audi A3, Lexus IS F, Toyota Camry, вертолет Bell-206", points: 1 }] },
+        { section: "📜 Устав Росгвардии", num: "14", text: "Расшифруйте термины: ОП, ООП, ОПГ, РППА, ОРД, ПП. Дайте им краткое определение. (0.5 за каждый)", maxPoints: 3, conditions: [{ text: "ОП (Опасный преступник)", points: 0.5 },{ text: "ООП (Особо опасный преступник)", points: 0.5 },{ text: "ОПГ (Организованная преступная группировка)", points: 0.5 },{ text: "РППА (Районы повышенной преступной активности)", points: 0.5 },{ text: "ОРД (Оперативно-розыскная деятельность)", points: 0.5 },{ text: "ПП (План перехват)", points: 0.5 }] },
+        { section: "📜 Устав Росгвардии", num: "15", text: "Дайте расшифровку следующих аббревиатур: ОМОН, СОБР, ОСН. (одна ошибка = 0)", maxPoints: 1, conditions: [{ text: "ОМОН, СОБР, ОСН — все три верно", points: 1 }] },
+        { section: "📜 Устав Росгвардии", num: "16", text: "Что понимается под словом «рейд»?", maxPoints: 1, conditions: [{ text: "Рейд (спецоперация) — запланированная/незапланированная ОРД, поиск, нейтрализация, построение, форма, вооружение, авто, приказы", points: 1 }] },
+        
+        // ========== ПРАКТИКИ (вопросы 1-3) ==========
+        { section: "🛡️ Практики", num: "1", text: "Что является основанием для проведения досмотра человека и/или транспортного средства?", maxPoints: 1, conditions: [{ text: "Наличие оснований полагать, что при них находятся запрещенные предметы", points: 1 }] },
+        { section: "🛡️ Практики", num: "2", text: "Опишите поэтапно действия сотрудника при проведении досмотра человека. (если нет перчаток и видео — 0)", maxPoints: 3, conditions: [{ text: "1. Представиться", points: 0.3 },{ text: "2. Озвучить основание", points: 0.3 },{ text: "3. Запустить видеозапись", points: 0.5 },{ text: "4. Надеть резиновые перчатки", points: 0.5 },{ text: "5. Провести руками/прохлопать", points: 0.4 },{ text: "6. Изъять предметы", points: 0.3 },{ text: "7. Упаковать в ZIP/мешки", points: 0.3 }] },
+        { section: "🛡️ Практики", num: "3", text: "Опишите поэтапно действия сотрудника при проведении досмотра автомобиля. (если нет перчаток и видео — 0)", maxPoints: 3, conditions: [{ text: "1. Представиться", points: 0.3 },{ text: "2. Озвучить основание", points: 0.3 },{ text: "3. Запустить видеозапись", points: 0.5 },{ text: "4. Надеть резиновые перчатки", points: 0.5 },{ text: "5. Открыть двери, багажник, капот", points: 0.4 },{ text: "6. Осмотреть бардачок, подлокотник, багажник", points: 0.4 },{ text: "7. Изъять предметы", points: 0.3 },{ text: "8. Сложить в мешки/контейнер", points: 0.3 }] }
+    ];
+
+    // Присваиваем уникальные ID сразу
+    questionsData.forEach((q, index) => { q.id = `q_${index}`; });
+
+    let conditionsState = {};
+    let totalMaxAll = 0;
+
+    function calculateTotalMax() {
+        let sum = 0;
+        questionsData.forEach(q => {
+            q.conditions.forEach(cond => {
+                sum += cond.points;
+            });
+        });
+        return sum;
+    }
+
+    function initState() {
+        questionsData.forEach(q => {
+            q.conditions.forEach((cond, idx) => {
+                const key = `${q.id}_${idx}`;
+                if (conditionsState[key] === undefined) conditionsState[key] = false;
+            });
+        });
+        totalMaxAll = calculateTotalMax();
+        document.getElementById('maxScore').innerText = totalMaxAll.toFixed(1);
+        updateResults();
+    }
+
+    function updateResults() {
+        let totalEarned = 0;
+        for (let key in conditionsState) {
+            if (conditionsState[key]) {
+                const parts = key.split('_');
+                const qid = parts[0];
+                const cidx = parseInt(parts[1]);
+                const question = questionsData.find(q => q.id === qid);
+                if (question && question.conditions[cidx]) {
+                    totalEarned += question.conditions[cidx].points;
+                }
+            }
+        }
+        document.getElementById('totalScore').innerText = totalEarned.toFixed(1);
+        const percent = (totalEarned / totalMaxAll) * 100;
+        let grade = 2;
+        let verdict = '';
+        if (percent >= 90) { grade = 5; verdict = '✅ ПРОХОД С ОТЛИЧИЕМ'; }
+        else if (percent >= 70) { grade = 4; verdict = '✅ ПРОХОД'; }
+        else if (percent >= 50) { grade = 3; verdict = '⚠️ ПЕРЕСДАЧА НА УСМОТРЕНИЕ'; }
+        else { grade = 2; verdict = '❌ ПЕРЕСДАЧА'; }
+        const gradeElem = document.getElementById('gradeValue');
+        gradeElem.innerText = grade;
+        gradeElem.className = `value grade-${grade}`;
+        document.getElementById('verdictText').innerText = verdict;
+    }
+
+    function renderFull() {
+        const container = document.getElementById('questionsContainer');
+        container.innerHTML = '';
+        const sectionsMap = new Map();
+        questionsData.forEach(q => {
+            if (!sectionsMap.has(q.section)) sectionsMap.set(q.section, []);
+            sectionsMap.get(q.section).push(q);
+        });
+
+        for (let [sectionName, questions] of sectionsMap.entries()) {
+            const sectionDiv = document.createElement('div');
+            sectionDiv.className = 'section';
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'section-title';
+            titleDiv.innerHTML = `<span>${sectionName}</span><span style="font-size:14px">▼</span>`;
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'section-content';
+            // По умолчанию все секции открыты
+            contentDiv.style.display = 'flex';
+            
+            titleDiv.onclick = () => {
+                const isVisible = contentDiv.style.display !== 'none';
+                contentDiv.style.display = isVisible ? 'none' : 'flex';
+                titleDiv.querySelector('span:last-child').innerHTML = isVisible ? '▶' : '▼';
+            };
+
+            questions.forEach(q => {
+                let earned = 0;
+                q.conditions.forEach((cond, idx) => {
+                    const key = `${q.id}_${idx}`;
+                    if (conditionsState[key]) earned += cond.points;
+                });
+
+                let conditionsHtml = '<div class="conditions-list">';
+                q.conditions.forEach((cond, idx) => {
+                    const key = `${q.id}_${idx}`;
+                    const isActive = conditionsState[key];
+                    conditionsHtml += `
+                        <div class="condition-item">
+                            <div class="condition-label">📌 +${cond.points} балла(ов)</div>
+                            <div class="condition-check">
+                                <span>${escapeHtml(cond.text)}</span>
+                                <button class="check-btn ${isActive ? 'active' : ''}" data-qid="${q.id}" data-cidx="${idx}">${isActive ? '✓ ЗАСЧИТАНО' : '○ ЗАСЧИТАТЬ'}</button>
+                                <span class="condition-points">${isActive ? `+${cond.points}` : `0/${cond.points}`}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                conditionsHtml += '</div>';
+
+                const card = document.createElement('div');
+                card.className = 'question-card';
+                card.innerHTML = `
+                    <div class="question-header">
+                        <div class="question-text"><strong style="color:#ffd700;">${q.num}.</strong> ${escapeHtml(q.text)}</div>
+                        <div class="max-points-badge">🎯 макс: ${q.maxPoints}</div>
+                    </div>
+                    <div class="question-body">
+                        ${conditionsHtml}
+                        <div class="question-footer">
+                            <div class="earned-points">✅ Заработано: ${earned.toFixed(1)} / ${q.maxPoints}</div>
+                            <div class="reference-answer">📖 Засчитывайте каждый пункт отдельно</div>
+                        </div>
+                    </div>
+                `;
+                contentDiv.appendChild(card);
+            });
+
+            sectionDiv.appendChild(titleDiv);
+            sectionDiv.appendChild(contentDiv);
+            container.appendChild(sectionDiv);
+        }
+
+        document.querySelectorAll('.check-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const qid = btn.getAttribute('data-qid');
+                const cidx = parseInt(btn.getAttribute('data-cidx'));
+                const key = `${qid}_${cidx}`;
+                conditionsState[key] = !conditionsState[key];
+                renderFull();
+                updateResults();
+            });
+        });
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+        for (let key in conditionsState) conditionsState[key] = false;
+        renderFull();
+        updateResults();
+    });
+
+    // Запуск
+    initState();
+    renderFull();
+</script>
+</body>
+</html>
