@@ -302,8 +302,8 @@
     <div class="result-panel">
         <div class="score-card">
             <div class="label">НАБРАНО БАЛЛОВ</div>
-            <div class="value" id="totalScore">0</div>
-            <div class="label">из <span id="maxScore">0</span></div>
+            <div class="value" id="totalScore">0.0</div>
+            <div class="label">из <span id="maxScore">0.0</span></div>
         </div>
         <div class="grade-card">
             <div class="label">ОЦЕНКА</div>
@@ -386,11 +386,12 @@
         { section: "🛡️ Практики", num: "3", text: "Опишите поэтапно действия сотрудника при проведении досмотра автомобиля. (если нет перчаток и видео — 0)", maxPoints: 3, conditions: [{ text: "1. Представиться", points: 0.3 },{ text: "2. Озвучить основание", points: 0.3 },{ text: "3. Запустить видеозапись", points: 0.5 },{ text: "4. Надеть резиновые перчатки", points: 0.5 },{ text: "5. Открыть двери, багажник, капот", points: 0.4 },{ text: "6. Осмотреть бардачок, подлокотник, багажник", points: 0.4 },{ text: "7. Изъять предметы", points: 0.3 },{ text: "8. Сложить в мешки/контейнер", points: 0.3 }] }
     ];
 
-    // Присваиваем уникальные ID сразу
-    questionsData.forEach((q, index) => { q.id = `q_${index}`; });
+    // Присваиваем уникальные ID
+    questionsData.forEach((q, index) => { 
+        q.id = `q_${index}`; 
+    });
 
     let conditionsState = {};
-    let totalMaxAll = 0;
 
     function calculateTotalMax() {
         let sum = 0;
@@ -402,14 +403,17 @@
         return sum;
     }
 
+    const totalMaxAll = calculateTotalMax();
+
     function initState() {
         questionsData.forEach(q => {
             q.conditions.forEach((cond, idx) => {
                 const key = `${q.id}_${idx}`;
-                if (conditionsState[key] === undefined) conditionsState[key] = false;
+                if (conditionsState[key] === undefined) {
+                    conditionsState[key] = false;
+                }
             });
         });
-        totalMaxAll = calculateTotalMax();
         document.getElementById('maxScore').innerText = totalMaxAll.toFixed(1);
         updateResults();
     }
@@ -417,7 +421,7 @@
     function updateResults() {
         let totalEarned = 0;
         for (let key in conditionsState) {
-            if (conditionsState[key]) {
+            if (conditionsState[key] === true) {
                 const parts = key.split('_');
                 const qid = parts[0];
                 const cidx = parseInt(parts[1]);
@@ -427,6 +431,10 @@
                 }
             }
         }
+        
+        // Округляем до 1 знака
+        totalEarned = Math.round(totalEarned * 10) / 10;
+        
         document.getElementById('totalScore').innerText = totalEarned.toFixed(1);
         const percent = (totalEarned / totalMaxAll) * 100;
         let grade = 2;
@@ -435,44 +443,67 @@
         else if (percent >= 70) { grade = 4; verdict = '✅ ПРОХОД'; }
         else if (percent >= 50) { grade = 3; verdict = '⚠️ ПЕРЕСДАЧА НА УСМОТРЕНИЕ'; }
         else { grade = 2; verdict = '❌ ПЕРЕСДАЧА'; }
+        
         const gradeElem = document.getElementById('gradeValue');
         gradeElem.innerText = grade;
         gradeElem.className = `value grade-${grade}`;
         document.getElementById('verdictText').innerText = verdict;
     }
 
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
     function renderFull() {
         const container = document.getElementById('questionsContainer');
         container.innerHTML = '';
         const sectionsMap = new Map();
+        
         questionsData.forEach(q => {
-            if (!sectionsMap.has(q.section)) sectionsMap.set(q.section, []);
+            if (!sectionsMap.has(q.section)) {
+                sectionsMap.set(q.section, []);
+            }
             sectionsMap.get(q.section).push(q);
         });
 
         for (let [sectionName, questions] of sectionsMap.entries()) {
             const sectionDiv = document.createElement('div');
             sectionDiv.className = 'section';
+            
             const titleDiv = document.createElement('div');
             titleDiv.className = 'section-title';
             titleDiv.innerHTML = `<span>${sectionName}</span><span style="font-size:14px">▼</span>`;
+            
             const contentDiv = document.createElement('div');
             contentDiv.className = 'section-content';
-            // По умолчанию все секции открыты
             contentDiv.style.display = 'flex';
             
             titleDiv.onclick = () => {
                 const isVisible = contentDiv.style.display !== 'none';
                 contentDiv.style.display = isVisible ? 'none' : 'flex';
-                titleDiv.querySelector('span:last-child').innerHTML = isVisible ? '▶' : '▼';
+                const arrowSpan = titleDiv.querySelector('span:last-child');
+                if (arrowSpan) {
+                    arrowSpan.innerHTML = isVisible ? '▶' : '▼';
+                }
             };
 
             questions.forEach(q => {
                 let earned = 0;
                 q.conditions.forEach((cond, idx) => {
                     const key = `${q.id}_${idx}`;
-                    if (conditionsState[key]) earned += cond.points;
+                    if (conditionsState[key]) {
+                        earned += cond.points;
+                    }
                 });
+                
+                // Округляем earned для отображения
+                earned = Math.round(earned * 10) / 10;
 
                 let conditionsHtml = '<div class="conditions-list">';
                 q.conditions.forEach((cond, idx) => {
@@ -495,7 +526,7 @@
                 card.className = 'question-card';
                 card.innerHTML = `
                     <div class="question-header">
-                        <div class="question-text"><strong style="color:#ffd700;">${q.num}.</strong> ${escapeHtml(q.text)}</div>
+                        <div class="question-text"><strong style="color:#ffd700;">${escapeHtml(q.num)}.</strong> ${escapeHtml(q.text)}</div>
                         <div class="max-points-badge">🎯 макс: ${q.maxPoints}</div>
                     </div>
                     <div class="question-body">
@@ -514,35 +545,30 @@
             container.appendChild(sectionDiv);
         }
 
+        // Добавляем обработчики событий для всех кнопок
         document.querySelectorAll('.check-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 const qid = btn.getAttribute('data-qid');
                 const cidx = parseInt(btn.getAttribute('data-cidx'));
                 const key = `${qid}_${cidx}`;
                 conditionsState[key] = !conditionsState[key];
-                renderFull();
-                updateResults();
+                renderFull(); // Перерисовываем
+                updateResults(); // Обновляем результаты
             });
         });
     }
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-
+    // Сброс всех баллов
     document.getElementById('resetBtn').addEventListener('click', () => {
-        for (let key in conditionsState) conditionsState[key] = false;
+        for (let key in conditionsState) {
+            conditionsState[key] = false;
+        }
         renderFull();
         updateResults();
     });
 
-    // Запуск
+    // Инициализация и запуск
     initState();
     renderFull();
 </script>
