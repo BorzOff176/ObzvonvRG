@@ -281,7 +281,6 @@
             border-radius: 8px;
         }
 
-        /* Модальное окно для входа */
         .modal {
             display: flex;
             position: fixed;
@@ -373,7 +372,6 @@
     </style>
 </head>
 <body>
-    <!-- Модальное окно входа -->
     <div id="authModal" class="modal">
         <div class="modal-content">
             <h2>🔐 Вход в систему</h2>
@@ -384,7 +382,6 @@
         </div>
     </div>
 
-    <!-- Основной контент (изначально скрыт) -->
     <div id="mainContent" style="display: none;">
         <div class="container">
             <div class="header">
@@ -414,56 +411,56 @@
     </div>
 
 <script>
-    // Пароль для доступа
-    const ACCESS_PASSWORD = "CdAD25032026";
+
+    const Kakahke = "CdAD25032026";
     
-    // Проверяем, был ли уже ввод пароля в этой сессии
+
     let isAuthenticated = sessionStorage.getItem('authenticated') === 'true';
     
-    // Функция проверки пароля
-    function checkPassword() {
+
+    function Picunss() {
         const passwordInput = document.getElementById('passwordInput');
         const errorMessage = document.getElementById('errorMessage');
         const enteredPassword = passwordInput.value;
         
-        if (enteredPassword === ACCESS_PASSWORD) {
-            // Пароль верный
+        if (enteredPassword === Kakahke) {
+
             sessionStorage.setItem('authenticated', 'true');
             isAuthenticated = true;
             document.getElementById('authModal').style.display = 'none';
             document.getElementById('mainContent').style.display = 'block';
             
-            // Инициализируем приложение после входа
+
             initApp();
         } else {
-            // Неверный пароль
+
             errorMessage.style.display = 'block';
             passwordInput.value = '';
             passwordInput.focus();
         }
     }
     
-    // Обработка нажатия Enter в поле пароля
+
     function handleKeyPress(event) {
         if (event.key === 'Enter') {
-            checkPassword();
+            Picunss();
         }
     }
     
-    // Если уже авторизован, показываем контент сразу
+
     if (isAuthenticated) {
         document.getElementById('authModal').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
         initApp();
     } else {
-        // Добавляем обработчики для формы входа
-        document.getElementById('loginBtn').addEventListener('click', checkPassword);
+
+        document.getElementById('loginBtn').addEventListener('click', Picunss);
         document.getElementById('passwordInput').addEventListener('keypress', handleKeyPress);
     }
     
-    // ==================== ОСНОВНАЯ ЛОГИКА ПРИЛОЖЕНИЯ ====================
+
     function initApp() {
-        // ВСЕ ВОПРОСЫ С НУМЕРАЦИЕЙ ПО ОБЗВОНУ
+
         const questionsData = [
             { section: "📖 УК. Основная часть", num: "1", text: "В случае, если человек угрожает сотруднику полиции расправой, какую статью вы инкриминируете? Озвучьте наказание.", maxPoints: 1, conditions: [{ text: "Статья 5.4 УК — арест сроком до 3 лет", points: 1 }] },
             { section: "📖 УК. Основная часть", num: "2", text: "Какую статью инкриминируете в случае похищения человека? Озвучьте наказание.", maxPoints: 1, conditions: [{ text: "Статья 4.4 УК — арест сроком от 4 до 6 лет", points: 1 }] },
@@ -520,10 +517,10 @@
             { section: "🛡️ Практики", num: "3", text: "Опишите поэтапно действия сотрудника при проведении досмотра автомобиля. (если нет перчаток и видео — 0)", maxPoints: 3, conditions: [{ text: "1. Представиться", points: 0.3 },{ text: "2. Озвучить основание", points: 0.3 },{ text: "3. Запустить видеозапись", points: 0.5 },{ text: "4. Надеть резиновые перчатки", points: 0.5 },{ text: "5. Открыть двери, багажник, капот", points: 0.4 },{ text: "6. Осмотреть бардачок, подлокотник, багажник", points: 0.4 },{ text: "7. Изъять предметы", points: 0.3 },{ text: "8. Сложить в мешки/контейнер", points: 0.3 }] }
         ];
 
-        // Состояние всех галочек
+
         let checkStates = {};
         
-        // Вычисление максимального балла
+
         function calculateMaxScore() {
             let total = 0;
             questionsData.forEach(q => {
@@ -536,7 +533,7 @@
         
         const MAX_SCORE = calculateMaxScore();
         
-        // Подсчет текущего балла
+
         function calculateCurrentScore() {
             let total = 0;
             for (let key in checkStates) {
@@ -551,7 +548,7 @@
             return Math.round(total * 10) / 10;
         }
         
-        // Обновление отображения результатов
+
         function updateResults() {
             const currentScore = calculateCurrentScore();
             const percent = (currentScore / MAX_SCORE) * 100;
@@ -572,12 +569,12 @@
             document.getElementById('verdictText').innerText = verdict;
         }
         
-        // Обработчик клика по кнопке "Засчитать"
+
         function handleCheckClick(questionIndex, conditionIndex, btnElement) {
             const key = `${questionIndex}_${conditionIndex}`;
             checkStates[key] = !checkStates[key];
             
-            // Обновляем внешний вид кнопки
+
             if (checkStates[key]) {
                 btnElement.classList.add('active');
                 btnElement.innerHTML = '✓ ЗАСЧИТАНО';
@@ -592,7 +589,7 @@
                 pointsSpan.innerHTML = `0/${points}`;
             }
             
-            // Обновляем заработанные баллы для этого вопроса
+
             let earnedForQuestion = 0;
             questionsData[questionIndex].conditions.forEach((cond, idx) => {
                 const k = `${questionIndex}_${idx}`;
@@ -605,16 +602,16 @@
             const footerSpan = btnElement.closest('.question-card').querySelector('.earned-points');
             footerSpan.innerHTML = `✅ Заработано: ${earnedForQuestion.toFixed(1)} / ${questionsData[questionIndex].maxPoints}`;
             
-            // Обновляем общие результаты
+
             updateResults();
         }
         
-        // Рендер всей страницы
+
         function render() {
             const container = document.getElementById('questionsContainer');
             container.innerHTML = '';
             
-            // Группируем по секциям
+
             const sections = {};
             questionsData.forEach((q, idx) => {
                 if (!sections[q.section]) sections[q.section] = [];
@@ -644,7 +641,7 @@
                     const q = item;
                     const qIdx = item.originalIndex;
                     
-                    // Вычисляем заработанные баллы для этого вопроса
+
                     let earnedForQuestion = 0;
                     q.conditions.forEach((cond, cIdx) => {
                         const key = `${qIdx}_${cIdx}`;
@@ -692,7 +689,7 @@
                 container.appendChild(sectionDiv);
             }
             
-            // Добавляем обработчики на все кнопки
+
             document.querySelectorAll('.check-btn').forEach(btn => {
                 const qIdx = parseInt(btn.getAttribute('data-qidx'));
                 const cIdx = parseInt(btn.getAttribute('data-cidx'));
@@ -713,14 +710,14 @@
             });
         }
         
-        // Сброс всех баллов
+
         document.getElementById('resetBtn').addEventListener('click', () => {
             checkStates = {};
             render();
             updateResults();
         });
         
-        // Инициализация
+
         render();
         updateResults();
     }
