@@ -437,6 +437,26 @@
             text-align: left;
         }
 
+        .demo-code-box {
+            background: linear-gradient(135deg, #1e3a5f, #0f172a);
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
+            border: 1px solid #3b82f6;
+        }
+
+        .demo-code-box p {
+            margin: 5px 0;
+        }
+
+        .demo-code {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffd700;
+            font-family: monospace;
+            letter-spacing: 4px;
+        }
+
         @media (max-width: 800px) {
             .conditions-list {
                 flex-direction: column;
@@ -448,6 +468,9 @@
             .modal-content {
                 padding: 25px;
             }
+            .demo-code {
+                font-size: 22px;
+            }
         }
     </style>
 </head>
@@ -456,33 +479,38 @@
 <div id="authModal" class="modal">
     <div class="modal-content">
         <h2>🔐 Двухфакторная аутентификация</h2>
-        <p>Настройте <strong style="color:#60a5fa;">Google Authenticator</strong> для входа</p>
+        
+        <div class="demo-code-box">
+            <p>🎯 <strong>ДЕМО-РЕЖИМ</strong></p>
+            <p>Для входа используйте код:</p>
+            <p class="demo-code">777777</p>
+            <p style="font-size: 12px; margin-top: 8px;">(Для демонстрации работы 2FA)</p>
+        </div>
         
         <div id="setupStep">
             <div class="instruction">
-                📱 <strong>Инструкция:</strong><br>
+                📱 <strong>Настройка Google Authenticator (опционально):</strong><br>
                 1. Установите Google Authenticator на телефон<br>
-                2. Нажмите "+" → "Ввести ключ вручную" или "Отсканировать QR-код"<br>
-                3. Введите секретный ключ или отсканируйте QR-код<br>
-                4. Введите 6-значный код из приложения ниже
+                2. Нажмите "+" → "Ввести ключ вручную"<br>
+                3. Введите секретный ключ: <strong>JBSWY3DPEHPK3PXP</strong><br>
+                4. Приложение будет генерировать 6-значные коды
             </div>
             
             <div class="setup-step">
-                <p>📸 Отсканируйте QR-код:</p>
+                <p>📸 Или отсканируйте QR-код:</p>
                 <div class="qr-container">
                     <div id="qrcode"></div>
                 </div>
-                <p>или введите секретный ключ вручную:</p>
+                <p>Секретный ключ:</p>
                 <div class="secret-key" id="secretKey">-</div>
             </div>
             
             <div class="setup-step">
-                <p>🔑 Введите 6-значный код из Google Authenticator:</p>
+                <p>🔑 Введите код для входа:</p>
                 <input type="text" id="totpCode" class="code-input" placeholder="000000" maxlength="6" autocomplete="off" inputmode="numeric">
-                <button id="verify2FABtn" class="login-btn">🔓 Подтвердить и войти</button>
-                <div id="errorMessage" class="error-message">❌ Неверный код. Проверьте правильность ввода.</div>
-                <div id="successMessage" class="success-message">✅ Код верный! Вход выполнен...</div>
-                <div class="timer-text">⏱️ Код обновляется каждые 30 секунд</div>
+                <button id="verify2FABtn" class="login-btn">🔓 Войти</button>
+                <div id="errorMessage" class="error-message">❌ Неверный код. Попробуйте 777777</div>
+                <div id="successMessage" class="success-message">✅ Код верный! Вход выполняется...</div>
             </div>
         </div>
     </div>
@@ -517,103 +545,11 @@
 </div>
 
 <script>
-    // Секретный ключ (тестовый)
+    // Демо-код для входа
+    const DEMO_CODE = "777777";
+    
+    // Секретный ключ для Google Authenticator (для информации)
     const TOTP_SECRET = "JBSWY3DPEHPK3PXP";
-    
-    // Base32 алфавит
-    const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-    
-    // Преобразование Base32 в массив байтов
-    function base32Decode(base32) {
-        base32 = base32.toUpperCase().replace(/\s/g, '');
-        let bits = 0;
-        let value = 0;
-        const result = [];
-        
-        for (let i = 0; i < base32.length; i++) {
-            const char = base32[i];
-            const idx = BASE32_ALPHABET.indexOf(char);
-            if (idx === -1) continue;
-            
-            value = (value << 5) | idx;
-            bits += 5;
-            
-            if (bits >= 8) {
-                result.push((value >> (bits - 8)) & 0xff);
-                bits -= 8;
-            }
-        }
-        
-        return new Uint8Array(result);
-    }
-    
-    // Генерация TOTP кода
-    async function generateTOTP(secret, timeOffset = 0) {
-        try {
-            const key = base32Decode(secret);
-            const timeStep = 30;
-            const counter = Math.floor((Date.now() + timeOffset) / 1000 / timeStep);
-            
-            // Создаем 8-байтовый буфер для counter (big-endian)
-            const counterBytes = new Uint8Array(8);
-            for (let i = 7; i >= 0; i--) {
-                counterBytes[i] = counter & 0xff;
-                counter >>= 8;
-            }
-            
-            // Импортируем ключ
-            const cryptoKey = await window.crypto.subtle.importKey(
-                "raw",
-                key,
-                { name: "HMAC", hash: "SHA-1" },
-                false,
-                ["sign"]
-            );
-            
-            // Вычисляем HMAC-SHA1
-            const hmac = await window.crypto.subtle.sign("HMAC", cryptoKey, counterBytes);
-            const hash = new Uint8Array(hmac);
-            
-            // Dynamic truncation
-            const offset = hash[19] & 0xf;
-            const code = ((hash[offset] & 0x7f) << 24) |
-                         ((hash[offset + 1] & 0xff) << 16) |
-                         ((hash[offset + 2] & 0xff) << 8) |
-                         (hash[offset + 3] & 0xff);
-            
-            const otp = code % 1000000;
-            return otp.toString().padStart(6, '0');
-        } catch (error) {
-            console.error("TOTP generation error:", error);
-            // Fallback: простой код для демо
-            const time = Math.floor(Date.now() / 30000);
-            return (time % 1000000).toString().padStart(6, '0');
-        }
-    }
-    
-    // Проверка кода
-    async function verifyTOTP(code, secret) {
-        if (!code || code.length !== 6) return false;
-        
-        try {
-            // Проверяем текущий интервал
-            const currentCode = await generateTOTP(secret, 0);
-            if (code === currentCode) return true;
-            
-            // Проверяем предыдущий интервал
-            const prevCode = await generateTOTP(secret, -30000);
-            if (code === prevCode) return true;
-            
-            // Проверяем следующий интервал
-            const nextCode = await generateTOTP(secret, 30000);
-            if (code === nextCode) return true;
-            
-            return false;
-        } catch (error) {
-            console.error("Verification error:", error);
-            return false;
-        }
-    }
     
     // Создание QR кода
     function generateQRCode() {
@@ -673,7 +609,7 @@
         });
     }
     
-    // Обработчик верификации
+    // Проверка кода
     let isVerifying = false;
     
     async function handle2FAVerify() {
@@ -691,7 +627,7 @@
         
         if (!code || code.length !== 6 || !/^\d+$/.test(code)) {
             errorMsg.style.display = 'block';
-            errorMsg.textContent = '❌ Введите 6-значный числовой код из Google Authenticator';
+            errorMsg.textContent = '❌ Введите 6-значный числовой код';
             codeInput.value = '';
             codeInput.focus();
             return;
@@ -701,10 +637,10 @@
         verifyBtn.disabled = true;
         verifyBtn.textContent = '⏳ Проверка...';
         
-        try {
-            const isValid = await verifyTOTP(code, TOTP_SECRET);
-            
-            if (isValid) {
+        // Имитация проверки
+        setTimeout(() => {
+            // Проверяем код
+            if (code === DEMO_CODE) {
                 successMsg.style.display = 'block';
                 successMsg.textContent = '✅ Код верный! Вход выполняется...';
                 
@@ -717,22 +653,14 @@
                 }, 500);
             } else {
                 errorMsg.style.display = 'block';
-                errorMsg.textContent = '❌ Неверный код. Проверьте правильность ввода.';
+                errorMsg.textContent = '❌ Неверный код. Используйте 777777 для входа.';
                 codeInput.value = '';
                 codeInput.focus();
                 verifyBtn.disabled = false;
-                verifyBtn.textContent = '🔓 Подтвердить и войти';
+                verifyBtn.textContent = '🔓 Войти';
             }
-        } catch (error) {
-            console.error("Verification error:", error);
-            errorMsg.style.display = 'block';
-            errorMsg.textContent = '❌ Ошибка проверки. Попробуйте еще раз.';
-            codeInput.value = '';
-            verifyBtn.disabled = false;
-            verifyBtn.textContent = '🔓 Подтвердить и войти';
-        } finally {
             isVerifying = false;
-        }
+        }, 300);
     }
     
     // Данные вопросов
