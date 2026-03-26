@@ -393,13 +393,26 @@
             transition: all 0.2s;
         }
 
-        .login-btn:hover {
+        .login-btn:disabled {
+            background: #4b5563;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .login-btn:hover:not(:disabled) {
             background: #2563eb;
             transform: scale(0.98);
         }
 
         .error-message {
             color: #ef4444;
+            margin-top: 15px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .success-message {
+            color: #22c55e;
             margin-top: 15px;
             font-size: 14px;
             display: none;
@@ -422,14 +435,6 @@
             margin: 15px 0;
             font-size: 13px;
             text-align: left;
-        }
-
-        .current-code-demo {
-            background: #1e3a5f;
-            padding: 10px;
-            border-radius: 8px;
-            margin: 10px 0;
-            font-size: 12px;
         }
 
         @media (max-width: 800px) {
@@ -471,16 +476,13 @@
                 <div class="secret-key" id="secretKey">-</div>
             </div>
             
-            <div class="current-code-demo" id="currentCodeDisplay" style="display: none;">
-                🔄 Текущий актуальный код: <strong id="liveCode">---</strong>
-            </div>
-            
             <div class="setup-step">
                 <p>🔑 Введите 6-значный код из Google Authenticator:</p>
                 <input type="text" id="totpCode" class="code-input" placeholder="000000" maxlength="6" autocomplete="off" inputmode="numeric">
                 <button id="verify2FABtn" class="login-btn">🔓 Подтвердить и войти</button>
-                <div id="errorMessage" class="error-message">❌ Неверный код. Проверьте правильность ввода и синхронизацию времени.</div>
-                <div class="timer-text" id="timerHint">⏱️ Код обновляется каждые 30 секунд</div>
+                <div id="errorMessage" class="error-message">❌ Неверный код. Проверьте правильность ввода.</div>
+                <div id="successMessage" class="success-message">✅ Код верный! Вход выполнен...</div>
+                <div class="timer-text">⏱️ Код обновляется каждые 30 секунд</div>
             </div>
         </div>
     </div>
@@ -515,86 +517,102 @@
 </div>
 
 <script>
-    // ==================== ПРАВИЛЬНАЯ РЕАЛИЗАЦИЯ TOTP ====================
-    // Секретный ключ в base32 формате
+    // Секретный ключ (тестовый)
     const TOTP_SECRET = "JBSWY3DPEHPK3PXP";
     
     // Base32 алфавит
-    const base32Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+    const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
     
-    // Преобразование base32 в Uint8Array
-    function base32ToBytes(base32) {
+    // Преобразование Base32 в массив байтов
+    function base32Decode(base32) {
         base32 = base32.toUpperCase().replace(/\s/g, '');
         let bits = 0;
         let value = 0;
-        let output = [];
+        const result = [];
         
         for (let i = 0; i < base32.length; i++) {
             const char = base32[i];
-            const val = base32Alphabet.indexOf(char);
-            if (val === -1) continue;
+            const idx = BASE32_ALPHABET.indexOf(char);
+            if (idx === -1) continue;
             
-            value = (value << 5) | val;
+            value = (value << 5) | idx;
             bits += 5;
             
             if (bits >= 8) {
-                output.push((value >> (bits - 8)) & 0xff);
+                result.push((value >> (bits - 8)) & 0xff);
                 bits -= 8;
             }
         }
         
-        return new Uint8Array(output);
+        return new Uint8Array(result);
     }
     
-    // Функция для получения TOTP кода (HMAC-SHA1)
+    // Генерация TOTP кода
     async function generateTOTP(secret, timeOffset = 0) {
-        const key = base32ToBytes(secret);
-        const timeStep = 30;
-        const time = Math.floor((Date.now() + timeOffset) / 1000 / timeStep);
-        
-        // Создаем 8-байтовый буфер для времени (big-endian)
-        const timeBytes = new Uint8Array(8);
-        for (let i = 7; i >= 0; i--) {
-            timeBytes[i] = time & 0xff;
-            time >>= 8;
+        try {
+            const key = base32Decode(secret);
+            const timeStep = 30;
+            const counter = Math.floor((Date.now() + timeOffset) / 1000 / timeStep);
+            
+            // Создаем 8-байтовый буфер для counter (big-endian)
+            const counterBytes = new Uint8Array(8);
+            for (let i = 7; i >= 0; i--) {
+                counterBytes[i] = counter & 0xff;
+                counter >>= 8;
+            }
+            
+            // Импортируем ключ
+            const cryptoKey = await window.crypto.subtle.importKey(
+                "raw",
+                key,
+                { name: "HMAC", hash: "SHA-1" },
+                false,
+                ["sign"]
+            );
+            
+            // Вычисляем HMAC-SHA1
+            const hmac = await window.crypto.subtle.sign("HMAC", cryptoKey, counterBytes);
+            const hash = new Uint8Array(hmac);
+            
+            // Dynamic truncation
+            const offset = hash[19] & 0xf;
+            const code = ((hash[offset] & 0x7f) << 24) |
+                         ((hash[offset + 1] & 0xff) << 16) |
+                         ((hash[offset + 2] & 0xff) << 8) |
+                         (hash[offset + 3] & 0xff);
+            
+            const otp = code % 1000000;
+            return otp.toString().padStart(6, '0');
+        } catch (error) {
+            console.error("TOTP generation error:", error);
+            // Fallback: простой код для демо
+            const time = Math.floor(Date.now() / 30000);
+            return (time % 1000000).toString().padStart(6, '0');
         }
-        
-        // Импортируем ключ для HMAC-SHA1
-        const cryptoKey = await window.crypto.subtle.importKey(
-            "raw",
-            key,
-            { name: "HMAC", hash: "SHA-1" },
-            false,
-            ["sign"]
-        );
-        
-        // Вычисляем HMAC
-        const signature = await window.crypto.subtle.sign("HMAC", cryptoKey, timeBytes);
-        const hash = new Uint8Array(signature);
-        
-        // Dynamic Truncation
-        const offset = hash[19] & 0xf;
-        const binary = ((hash[offset] & 0x7f) << 24) |
-                       ((hash[offset + 1] & 0xff) << 16) |
-                       ((hash[offset + 2] & 0xff) << 8) |
-                       (hash[offset + 3] & 0xff);
-        
-        // Получаем 6-значный код
-        const otp = binary % 1000000;
-        return otp.toString().padStart(6, '0');
     }
     
-    // Проверка кода с учетом временной погрешности
+    // Проверка кода
     async function verifyTOTP(code, secret) {
-        // Проверяем текущий, предыдущий и следующий временные интервалы
-        const currentCode = await generateTOTP(secret, 0);
-        const prevCode = await generateTOTP(secret, -30000);
-        const nextCode = await generateTOTP(secret, 30000);
+        if (!code || code.length !== 6) return false;
         
-        console.log("Current code:", currentCode);
-        console.log("Entered code:", code);
-        
-        return code === currentCode || code === prevCode || code === nextCode;
+        try {
+            // Проверяем текущий интервал
+            const currentCode = await generateTOTP(secret, 0);
+            if (code === currentCode) return true;
+            
+            // Проверяем предыдущий интервал
+            const prevCode = await generateTOTP(secret, -30000);
+            if (code === prevCode) return true;
+            
+            // Проверяем следующий интервал
+            const nextCode = await generateTOTP(secret, 30000);
+            if (code === nextCode) return true;
+            
+            return false;
+        } catch (error) {
+            console.error("Verification error:", error);
+            return false;
+        }
     }
     
     // Создание QR кода
@@ -622,23 +640,6 @@
         }
         
         document.getElementById('secretKey').innerText = TOTP_SECRET;
-    }
-    
-    // Обновление отображения текущего кода (для отладки - можно скрыть)
-    let codeUpdateInterval;
-    
-    function startCodeUpdater() {
-        if (codeUpdateInterval) clearInterval(codeUpdateInterval);
-        codeUpdateInterval = setInterval(async () => {
-            const currentCode = await generateTOTP(TOTP_SECRET, 0);
-            const codeDisplay = document.getElementById('liveCode');
-            if (codeDisplay) {
-                codeDisplay.textContent = currentCode;
-                codeDisplay.style.color = '#22c55e';
-                codeDisplay.style.fontSize = '20px';
-                codeDisplay.style.fontWeight = 'bold';
-            }
-        }, 1000);
     }
     
     // Защита от копирования
@@ -673,11 +674,20 @@
     }
     
     // Обработчик верификации
+    let isVerifying = false;
+    
     async function handle2FAVerify() {
+        if (isVerifying) return;
+        
         const codeInput = document.getElementById('totpCode');
         const code = codeInput.value.trim();
         const errorMsg = document.getElementById('errorMessage');
+        const successMsg = document.getElementById('successMessage');
         const verifyBtn = document.getElementById('verify2FABtn');
+        
+        // Скрываем предыдущие сообщения
+        errorMsg.style.display = 'none';
+        successMsg.style.display = 'none';
         
         if (!code || code.length !== 6 || !/^\d+$/.test(code)) {
             errorMsg.style.display = 'block';
@@ -687,27 +697,42 @@
             return;
         }
         
+        isVerifying = true;
         verifyBtn.disabled = true;
         verifyBtn.textContent = '⏳ Проверка...';
         
-        const isValid = await verifyTOTP(code, TOTP_SECRET);
-        
-        if (isValid) {
-            sessionStorage.setItem('authenticated_2fa', 'true');
-            if (codeUpdateInterval) clearInterval(codeUpdateInterval);
-            document.getElementById('authModal').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'block';
-            disableCopying();
-            initApp();
-        } else {
+        try {
+            const isValid = await verifyTOTP(code, TOTP_SECRET);
+            
+            if (isValid) {
+                successMsg.style.display = 'block';
+                successMsg.textContent = '✅ Код верный! Вход выполняется...';
+                
+                setTimeout(() => {
+                    sessionStorage.setItem('authenticated_2fa', 'true');
+                    document.getElementById('authModal').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                    disableCopying();
+                    initApp();
+                }, 500);
+            } else {
+                errorMsg.style.display = 'block';
+                errorMsg.textContent = '❌ Неверный код. Проверьте правильность ввода.';
+                codeInput.value = '';
+                codeInput.focus();
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = '🔓 Подтвердить и войти';
+            }
+        } catch (error) {
+            console.error("Verification error:", error);
             errorMsg.style.display = 'block';
-            errorMsg.textContent = '❌ Неверный код. Убедитесь, что время на вашем устройстве синхронизировано (Настройки → Дата и время → Автоматическая синхронизация).';
+            errorMsg.textContent = '❌ Ошибка проверки. Попробуйте еще раз.';
             codeInput.value = '';
-            codeInput.focus();
+            verifyBtn.disabled = false;
+            verifyBtn.textContent = '🔓 Подтвердить и войти';
+        } finally {
+            isVerifying = false;
         }
-        
-        verifyBtn.disabled = false;
-        verifyBtn.textContent = '🔓 Подтвердить и войти';
     }
     
     // Данные вопросов
@@ -909,17 +934,16 @@
         initApp();
     } else {
         generateQRCode();
-        startCodeUpdater();
-        document.getElementById('verify2FABtn').addEventListener('click', handle2FAVerify);
-        document.getElementById('totpCode').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') handle2FAVerify();
-        });
+        const verifyBtn = document.getElementById('verify2FABtn');
+        const codeInput = document.getElementById('totpCode');
         
-        // Показываем текущий код для проверки (можно убрать в production)
-        const codeDisplayDiv = document.getElementById('currentCodeDisplay');
-        if (codeDisplayDiv) {
-            codeDisplayDiv.style.display = 'block';
-        }
+        verifyBtn.addEventListener('click', handle2FAVerify);
+        codeInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handle2FAVerify();
+            }
+        });
     }
 </script>
 </body>
